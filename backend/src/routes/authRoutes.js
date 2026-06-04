@@ -8,6 +8,14 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Register
 router.post('/register', async (req, res) => {
   const { email, password, name } = req.body;
+  // Check registration secret key
+  const clientSecret = req.headers['x-registration-secret'] || req.body.registrationSecret;
+  const serverSecret = process.env.REGISTRATION_SECRET;
+
+  if (!serverSecret || clientSecret !== serverSecret) {
+    return res.status(403).json({ error: 'التسجيل العام مغلق. يرجى تقديم رمز تسجيل صالح.' });
+  }
+
   if (!email || !password || !name) {
     return res.status(400).json({ error: 'من فضلك املأ جميع البيانات المطلوبة' });
   }

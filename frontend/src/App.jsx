@@ -4,7 +4,6 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import BottomNav from './components/BottomNav';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Doctors from './pages/Doctors';
 import Visits from './pages/Visits';
@@ -29,7 +28,6 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
 
           {/* Protected Routes */}
           <Route
