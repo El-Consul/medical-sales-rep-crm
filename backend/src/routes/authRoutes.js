@@ -41,7 +41,6 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         reminderEmail: user.reminderEmail,
-        sheetsUrl: user.sheetsUrl,
       },
     });
   } catch (error) {
@@ -81,7 +80,6 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         reminderEmail: user.reminderEmail,
-        sheetsUrl: user.sheetsUrl,
       },
     });
   } catch (error) {
@@ -104,7 +102,6 @@ router.get('/me', authMiddleware, async (req, res) => {
       name: user.name,
       email: user.email,
       reminderEmail: user.reminderEmail,
-      sheetsUrl: user.sheetsUrl,
     });
   } catch (error) {
     console.error(error);

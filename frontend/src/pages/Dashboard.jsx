@@ -14,7 +14,6 @@ const Dashboard = () => {
   const [todayReminders, setTodayReminders] = useState([]);
   const [recentVisits, setRecentVisits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
 
   const showToast = (msg, type = 'success') => {
@@ -64,44 +63,7 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
-  const handleSync = async () => {
-    if (!user?.sheetsUrl) {
-      showToast('يرجى إدخال رابط Google Sheets في صفحة الإعدادات أولاً', 'error');
-      return;
-    }
-    try {
-      setSyncing(true);
-      const syncDataRes = await axios.get('/settings/sync-data');
-      const { doctors, visits } = syncDataRes.data;
 
-      // Post to Apps Script (mode no-cors requires fetch, but we can do a normal POST via axios or fetch)
-      // Since it's no-cors, we use fetch with mode no-cors
-      await fetch(user.sheetsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(doctors),
-      });
-
-      await fetch(user.sheetsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(visits),
-      });
-
-      // Update last sync in settings
-      const nowStr = new Date().toLocaleString('ar-EG');
-      await axios.put('/settings', { sheetsUrl: user.sheetsUrl }); // update local setting status or metadata
-      
-      showToast('تمت المزامنة بنجاح مع Google Sheets');
-    } catch (error) {
-      console.error('Sync failed', error);
-      showToast('فشلت المزامنة، تأكد من رابط Apps Script', 'error');
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -135,12 +97,7 @@ const Dashboard = () => {
       )}
 
       {/* Sync Loader */}
-      {syncing && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-          <div className="w-12 h-12 border-4 border-slate-200 border-t-green-600 rounded-full animate-spin"></div>
-          <p className="mt-4 text-sm text-slate-600 font-bold">جاري مزامنة البيانات مع Google Sheets...</p>
-        </div>
-      )}
+
 
       {/* Header */}
       <header className="bg-gradient-to-br from-blue-700 to-indigo-800 text-white rounded-b-[2.5rem] px-6 pt-8 pb-12 shadow-lg md:max-w-md md:mx-auto md:rounded-2xl md:mt-4">
@@ -150,13 +107,7 @@ const Dashboard = () => {
             <p className="text-xs text-blue-100">إدارة عملك الميداني بكل سهولة</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={handleSync}
-              className="p-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl transition-all active:scale-95"
-              title="مزامنة مع Google Sheets"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
+
             <button
               onClick={logout}
               className="p-2.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/10 rounded-2xl transition-all active:scale-95 text-red-200"

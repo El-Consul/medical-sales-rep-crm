@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 const Settings = () => {
   const { user, updateSettings } = useAuth();
   const [reminderEmail, setReminderEmail] = useState(user?.reminderEmail || '');
-  const [sheetsUrl, setSheetsUrl] = useState(user?.sheetsUrl || '');
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
@@ -19,7 +18,7 @@ const Settings = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const result = await updateSettings({ reminderEmail, sheetsUrl });
+    const result = await updateSettings({ reminderEmail });
     setSaving(false);
     if (result.success) {
       showToast('تم حفظ الإعدادات بنجاح');
@@ -28,41 +27,8 @@ const Settings = () => {
     }
   };
 
-  // Google Apps Script Code template
-  const appsScriptCode = `// Medical CRM - Google Apps Script
-// انسخ الكود ده كله والصقه في Apps Script
+  // All Google Sheets/Apps Script code removed.
 
-function doPost(e) {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var data = JSON.parse(e.postData.contents);
-    if (data.type === 'doctors') syncSheet(ss, 'الدكاتره', data.headers, data.rows, '#1a5276');
-    else if (data.type === 'visits') syncSheet(ss, 'الزيارات', data.headers, data.rows, '#27ae60');
-    return ContentService.createTextOutput(JSON.stringify({status:'ok'})).setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({status:'error',msg:err.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({status:'ok',msg:'Medical CRM Ready'})).setMimeType(ContentService.MimeType.JSON);
-}
-
-function syncSheet(ss, name, headers, rows, color) {
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) sheet = ss.insertSheet(name);
-  sheet.clearContents();
-  sheet.appendRow(headers);
-  sheet.getRange(1,1,1,headers.length).setBackground(color).setFontColor('#ffffff').setFontWeight('bold').setHorizontalAlignment('center');
-  if (rows.length > 0) sheet.getRange(2,1,rows.length,headers.length).setValues(rows);
-  sheet.autoResizeColumns(1, headers.length);
-  SpreadsheetApp.flush();
-}`;
-
-  const copyCode = () => {
-    navigator.clipboard.writeText(appsScriptCode);
-    showToast('تم نسخ كود Apps Script بنجاح');
-  };
 
   const handleExportJSON = async () => {
     try {
@@ -110,11 +76,11 @@ function syncSheet(ss, name, headers, rows, color) {
       </header>
 
       <main className="max-w-md mx-auto px-4 mt-6 space-y-6">
-        {/* Email & Sheets Url form */}
+        {/* Email & Reminder Settings form */}
         <form onSubmit={handleSave} className="bg-white rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 space-y-4 text-right">
           <h2 className="font-extrabold text-sm text-slate-900 border-b border-slate-50 pb-3 mb-2 flex items-center gap-2">
             <Mail className="w-5 h-5 text-blue-600" />
-            <span>📧 إعدادات التذكير والمزامنة</span>
+            <span>📧 إعدادات البريد والتذكير</span>
           </h2>
 
           <div>
@@ -126,17 +92,6 @@ function syncSheet(ss, name, headers, rows, color) {
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-left"
               value={reminderEmail}
               onChange={(e) => setReminderEmail(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1.5">Apps Script Web App URL</label>
-            <input
-              type="url"
-              placeholder="https://script.google.com/macros/s/.../exec"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-left font-mono text-xs"
-              value={sheetsUrl}
-              onChange={(e) => setSheetsUrl(e.target.value)}
             />
           </div>
 
@@ -159,48 +114,7 @@ function syncSheet(ss, name, headers, rows, color) {
           </button>
         </form>
 
-        {/* Integration guides */}
-        <section className="bg-white rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 text-right space-y-4">
-          <h2 className="font-extrabold text-sm text-slate-900 border-b border-slate-50 pb-3 flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-green-600" />
-            <span>📊 ربط Google Sheets</span>
-          </h2>
 
-          <div className="bg-blue-50/50 text-blue-900 text-xs leading-relaxed rounded-2xl p-4 border border-blue-100 space-y-2.5">
-            <h3 className="font-extrabold text-blue-950">📌 خطوات ربط ملف Google Sheet:</h3>
-            <p>1️⃣ افتح جدول البيانات (الزر بالأسفل)</p>
-            <p>2️⃣ من القائمة العلوية: <b>Extensions ← Apps Script</b></p>
-            <p>3️⃣ امسح أي كود موجود والصق الكود الذي ستنسخه بالأسفل</p>
-            <p>4️⃣ اضغط على <b>Deploy ← New deployment ← Web App</b></p>
-            <p>5️⃣ غير "Who has access" واجعلها <b>Anyone</b></p>
-            <p>6️⃣ انسخ الـ Web App URL والصقه في خانة الـ URL بالأعلى ثم احفظ.</p>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={copyCode}
-              type="button"
-              className="flex-1 py-3 bg-green-50 hover:bg-green-100 text-green-700 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 border border-green-200"
-            >
-              <Code className="w-4 h-4" />
-              <span>انسخ الكود</span>
-            </button>
-            <a
-              href="https://docs.google.com/spreadsheets/d/1ifTRzIQ86m-HLJ-Mx799yuZSf11Z-VETs7RvgaO5OVY/edit"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 text-center"
-            >
-              <button
-                type="button"
-                className="w-full py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 border border-amber-200"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>افتح الشيت</span>
-              </button>
-            </a>
-          </div>
-        </section>
 
         {/* Backups */}
         <section className="bg-white rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 text-right space-y-4">

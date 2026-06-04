@@ -8,10 +8,8 @@
   animation: slideUp 0.3s ease-out forwards;
 }
 
-@layer base {
-  body {
-    -webkit-tap-highlight-color: transparent;
-  }
+body {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Custom Scrollbar Styles */

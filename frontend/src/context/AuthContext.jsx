@@ -3,8 +3,8 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-// Configure default base URL
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// In dev, Vite proxies /api → backend. In production, set VITE_API_URL.
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -84,9 +84,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Update Settings handler
-  const updateSettings = async (settingsData) => {
+  const updateSettings = async ({ reminderEmail }) => {
     try {
-      const response = await axios.put('/settings', settingsData);
+      const response = await axios.put('/settings', { reminderEmail });
       setUser(response.data);
       return { success: true };
     } catch (error) {
@@ -96,6 +96,7 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+
 
   const value = {
     user,

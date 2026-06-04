@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import emailjs from '@emailjs/browser';
-import { Search, Plus, Calendar, MapPin, Activity, FileText, MessageSquare, Clock, Trash2, X, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { Search, Plus, Calendar, MapPin, Activity, FileText, MessageSquare, Clock, Trash2, X, ChevronDown, ChevronUp, Loader2, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // Default EmailJS keys from mockup, customizable via env
@@ -97,6 +97,28 @@ const Visits = () => {
     } catch (error) {
       console.error('Error deleting visit', error);
       showToast('فشل في حذف سجل الزيارة', 'error');
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      showToast('جاري تحضير ملف الإكسل...', 'info');
+      const response = await axios.get('/visits/export', {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `الزيارات_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('تم تحميل ملف الإكسل بنجاح');
+    } catch (error) {
+      console.error('Error exporting visits to Excel', error);
+      showToast('حدث خطأ أثناء تصدير ملف الإكسل', 'error');
     }
   };
 
@@ -229,15 +251,26 @@ const Visits = () => {
 
       {/* Top Search Bar */}
       <div className="bg-white sticky top-0 z-40 border-b border-slate-100 px-4 py-4 md:max-w-md md:mx-auto md:rounded-t-2xl md:mt-4">
-        <div className="relative">
-          <input
-            type="text"
-            className="w-full pr-11 pl-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-right"
-            placeholder="ابحث باسم الدكتور، الملاحظات، الفيدباك..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Search className="w-5 h-5 text-slate-400 absolute right-3.5 top-3.5 pointer-events-none" />
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={handleExportExcel}
+            type="button"
+            className="flex items-center justify-center gap-1.5 px-3 py-3 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 font-bold text-xs rounded-xl transition-all active:scale-[0.98] cursor-pointer"
+            title="تصدير إكسل"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>تصدير إكسل</span>
+          </button>
+          <div className="relative flex-1">
+            <input
+              type="text"
+              className="w-full pr-11 pl-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-right"
+              placeholder="ابحث باسم الدكتور، الملاحظات، الفيدباك..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Search className="w-5 h-5 text-slate-400 absolute right-3.5 top-3.5 pointer-events-none" />
+          </div>
         </div>
       </div>
 

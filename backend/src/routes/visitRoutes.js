@@ -129,4 +129,88 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Export visits to Excel
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    const visits = await prisma.visit.findMany({
+      where: { userId: req.user.id },
+      include: {
+        doctor: {
+          select: {
+            name: true,
+            specialty: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: { visitDate: 'desc' },
+    });
+
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('الزيارات');
+
+    // Right to Left layout for Arabic text support
+    worksheet.views = [{ rtl: true }];
+
+    // Set columns definition
+    worksheet.columns = [
+      { header: 'اسم الدكتور', key: 'doctorName', width: 25 },
+      { header: 'التخصص', key: 'specialty', width: 20 },
+      { header: 'الهاتف', key: 'phone', width: 15 },
+      { header: 'تاريخ الزيارة', key: 'visitDate', width: 25 },
+      { header: 'نوع الزيارة', key: 'visitType', width: 15 },
+      { header: 'المكان', key: 'location', width: 25 },
+      { header: 'ملاحظات', key: 'notes', width: 35 },
+      { header: 'فيدباك الدكتور', key: 'feedback', width: 35 },
+      { header: 'الزيارة القادمة', key: 'nextVisitDate', width: 25 },
+    ];
+
+    // Populate rows
+    visits.forEach((v) => {
+      worksheet.addRow({
+        doctorName: v.doctor?.name || '',
+        specialty: v.doctor?.specialty || '',
+        phone: v.doctor?.phone || '',
+        visitDate: v.visitDate ? new Date(v.visitDate).toLocaleString('ar-EG') : '',
+        visitType: v.visitType || '',
+        location: v.location || '',
+        notes: v.notes || '',
+        feedback: v.feedback || '',
+        nextVisitDate: v.nextVisitDate ? new Date(v.nextVisitDate).toLocaleString('ar-EG') : '',
+      });
+    });
+
+    // Style the header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { name: 'Segoe UI', bold: true, color: { argb: 'FFFFFF' }, size: 11 };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1E3A8A' }, // dark blue
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Align all other rows cells to right (as it is Arabic)
+    worksheet.eachRow({ includeHeader: false }, (row) => {
+      row.alignment = { vertical: 'middle', horizontal: 'right' };
+    });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=visits_report.xlsx'
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export Excel failed:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تصدير ملف الإكسل' });
+  }
+});
+
 module.exports = router;
