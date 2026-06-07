@@ -9,21 +9,29 @@ generator client {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password      String
-  name          String
-   reminderEmail String?
-   createdAt     DateTime @default(now())
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  password           String
+  name               String
+  reminderEmail      String?
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
 
   doctors Doctor[]
   visits  Visit[]
+  tasks   Task[]
+  doctorTargets DoctorTarget[]
 }
 
 model Doctor {
   id             String   @id @default(uuid())
   name           String
   specialty      String?
+  priority       Priority @default(C)
+  subSpecialty   String?  @map("sub_specialty")
+  assistantName  String?  @map("assistant_name")
+  assistantPhone String?  @map("assistant_phone")
+  preferredContact ContactMethod? @map("preferred_contact")
   phone          String?
   address        String?
   hospital1      String?
@@ -32,12 +40,17 @@ model Doctor {
   nextVisitDate  DateTime?
   reminderNote   String?
   lastFeedback   String?
+  lat            Float?
+  lng            Float?
+  area           String?
   createdAt      DateTime @default(now())
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   visits Visit[]
+  tasks  Task[]
+  doctorTargets DoctorTarget[]
 }
 
 model Visit {
@@ -46,6 +59,10 @@ model Visit {
   doctor                Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   visitDate             DateTime
   visitType             String
+  productsPresented     String?  @map("products_presented")
+  samplesGiven          Int?     @map("samples_given")
+  doctorMood            DoctorMood? @map("doctor_mood")
+  visitResult           VisitResult? @map("visit_result")
   location              String?
   notes                 String?
   feedback              String?
@@ -55,4 +72,53 @@ model Visit {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  title     String
+  dueDate   DateTime?
+  isDone    Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DoctorTarget {
+  id           String   @id @default(uuid())
+  doctorId     String
+  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  month        DateTime
+  targetVisits Int
+  actualVisits Int      @default(0)
+  createdAt    DateTime @default(now())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Priority {
+  A
+  B
+  C
+}
+
+enum ContactMethod {
+  whatsapp
+  phone
+  email
+}
+
+enum DoctorMood {
+  positive
+  neutral
+  negative
+}
+
+enum VisitResult {
+  interested
+  not_interested
+  needs_followup
 }

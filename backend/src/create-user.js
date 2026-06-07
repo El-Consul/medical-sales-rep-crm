@@ -24,7 +24,8 @@ async function main() {
         email,
         password: hashedPassword,
         name,
-        reminderEmail: email
+        reminderEmail: email,
+        mustChangePassword: true,
       }
     });
 

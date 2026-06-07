@@ -14,6 +14,11 @@ const Doctors = () => {
   const [formData, setFormData] = useState({
     name: '',
     specialty: '',
+    priority: 'C',
+    sub_specialty: '',
+    assistant_name: '',
+    assistant_phone: '',
+    preferred_contact: 'phone',
     phone: '',
     address: '',
     hospital1: '',
@@ -55,6 +60,11 @@ const Doctors = () => {
     setFormData({
       name: '',
       specialty: '',
+      priority: 'C',
+      sub_specialty: '',
+      assistant_name: '',
+      assistant_phone: '',
+      preferred_contact: 'phone',
       phone: '',
       address: '',
       hospital1: '',
@@ -72,6 +82,11 @@ const Doctors = () => {
     setFormData({
       name: doc.name || '',
       specialty: doc.specialty || '',
+      priority: doc.priority || 'C',
+      sub_specialty: doc.subSpecialty || '',
+      assistant_name: doc.assistantName || '',
+      assistant_phone: doc.assistantPhone || '',
+      preferred_contact: doc.preferredContact || 'phone',
       phone: doc.phone || '',
       address: doc.address || '',
       hospital1: doc.hospital1 || '',
@@ -183,15 +198,16 @@ const Doctors = () => {
               >
                 {/* Header */}
                 <div className="flex justify-between items-start gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-lg font-black shadow-md">
-                      {doc.name ? doc.name[2] || '👨‍⚕️' : '👨‍⚕️'}
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-slate-900 text-base">{doc.name}</h3>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-lg font-black shadow-md">
+                  {doc.name ? doc.name[2] || '👨‍⚕️' : '👨‍⚕️'}
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">{doc.name}</h3>
                       <p className="text-xs text-blue-600 font-semibold">{doc.specialty || 'تخصص غير محدد'}</p>
-                    </div>
-                  </div>
+                      {doc.subSpecialty && <p className="text-[11px] text-slate-500">{doc.subSpecialty}</p>}
+                </div>
+              </div>
                   {/* Actions */}
                   <div className="flex gap-1">
                     <button
@@ -207,6 +223,14 @@ const Doctors = () => {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+                </div>
+
+                {/* Priority and contact */}
+                <div className="absolute left-4 top-4 flex items-center gap-2">
+                  <div className={`px-2 py-1 rounded-full text-white text-[11px] font-black ${doc.priority === 'A' ? 'bg-red-500' : doc.priority === 'B' ? 'bg-amber-500' : 'bg-slate-400'}`}>{doc.priority}</div>
+                  {doc.preferredContact === 'whatsapp' && <div className="text-sm">💬</div>}
+                  {doc.preferredContact === 'phone' && <div className="text-sm">📞</div>}
+                  {doc.preferredContact === 'email' && <div className="text-sm">✉️</div>}
                 </div>
 
                 {/* Grid Info */}
@@ -307,16 +331,20 @@ const Doctors = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">التخصص</label>
-                  <input
-                    type="text"
-                    placeholder="باطنة، أطفال..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-right"
-                    value={formData.specialty}
-                    onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5">التخصص</label>
+                <input
+                  type="text"
+                  placeholder="باطنة، أطفال..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-right"
+                  value={formData.specialty}
+                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5">التخصص الفرعي</label>
+                <input value={formData.sub_specialty} onChange={e => setFormData({ ...formData, sub_specialty: e.target.value })} placeholder="مثال: قلب أطفال" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-right" />
+              </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1.5">التليفون</label>
                   <input
@@ -327,6 +355,52 @@ const Doctors = () => {
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">اسم المساعد / السكرتير</label>
+                  <input value={formData.assistant_name} onChange={e => setFormData({ ...formData, assistant_name: e.target.value })} placeholder="اسم المساعد" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-right" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">هاتف المساعد</label>
+                  <input value={formData.assistant_phone} onChange={e => setFormData({ ...formData, assistant_phone: e.target.value })} placeholder="010xxxx" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-left" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">التواصل المفضل</label>
+                  <select value={formData.preferred_contact} onChange={e => setFormData({ ...formData, preferred_contact: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-right">
+                    <option value="whatsapp">واتساب</option>
+                    <option value="phone">هاتف</option>
+                    <option value="email">ايميل</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">الأولويه</label>
+                  <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-right">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">خط العرض (lat)</label>
+                  <input value={formData.lat || ''} onChange={e => setFormData({ ...formData, lat: e.target.value })} placeholder="مثال: 30.0444" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-left" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">خط الطول (lng)</label>
+                  <input value={formData.lng || ''} onChange={e => setFormData({ ...formData, lng: e.target.value })} placeholder="مثال: 31.2357" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-left" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5">المنطقة / الحي</label>
+                <input value={formData.area || ''} onChange={e => setFormData({ ...formData, area: e.target.value })} placeholder="المنطقة" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-right" />
               </div>
 
               <div>
