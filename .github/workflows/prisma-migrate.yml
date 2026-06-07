@@ -47,3 +47,26 @@ jobs:
           echo "Running prisma migrate deploy..."
           npx prisma migrate deploy
           npx prisma generate
+
+      - name: DB connectivity debug
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Debugging DB connectivity (this step runs after migrations attempt)"
+          apt-get update -y
+          apt-get install -y postgresql-client python3 -y || true
+          # Print parsed host/port for debugging (does not reveal credentials)
+          python3 - <<'PY'
+import os,urllib.parse
+u=os.environ.get('DATABASE_URL')
+if not u:
+    print('DATABASE_URL not set')
+else:
+    p=urllib.parse.urlparse(u)
+    print('DB host:', p.hostname)
+    print('DB port:', p.port)
+PY
+          # Try a direct psql connection; failure will show in logs
+          echo 'Running: psql "$DATABASE_URL" -c "SELECT 1;"'
+          psql "$DATABASE_URL" -c "SELECT 1;" || echo "psql check failed (non-zero exit)"
