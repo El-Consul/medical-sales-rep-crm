@@ -7,6 +7,9 @@ const BottomNav = () => {
     { path: '/', label: 'الرئيسية', icon: Home },
     { path: '/doctors', label: 'الدكاتره', icon: Users },
     { path: '/visits', label: 'الزيارات', icon: Calendar },
+    { path: '/tasks', label: 'المهام', icon: Clock },
+    { path: '/reports', label: 'التقارير', icon: Activity },
+    { path: '/map', label: 'الخريطة', icon: MapPin },
     { path: '/settings', label: 'الإعدادات', icon: Settings },
   ];
 

@@ -35,6 +35,11 @@ router.post('/', authMiddleware, async (req, res) => {
   const {
     name,
     specialty,
+    priority,
+    sub_specialty,
+    assistant_name,
+    assistant_phone,
+    preferred_contact,
     phone,
     address,
     hospital1,
@@ -43,6 +48,9 @@ router.post('/', authMiddleware, async (req, res) => {
     nextVisitDate,
     reminderNote,
     lastFeedback,
+    lat,
+    lng,
+    area,
   } = req.body;
 
   if (!name) {
@@ -54,6 +62,11 @@ router.post('/', authMiddleware, async (req, res) => {
       data: {
         name,
         specialty,
+        priority,
+        subSpecialty: sub_specialty,
+        assistantName: assistant_name,
+        assistantPhone: assistant_phone,
+        preferredContact: preferred_contact,
         phone,
         address,
         hospital1,
@@ -62,6 +75,9 @@ router.post('/', authMiddleware, async (req, res) => {
         nextVisitDate: nextVisitDate ? new Date(nextVisitDate) : null,
         reminderNote,
         lastFeedback,
+        lat: lat !== undefined ? parseFloat(lat) : null,
+        lng: lng !== undefined ? parseFloat(lng) : null,
+        area,
         userId: req.user.id,
       },
     });
@@ -78,6 +94,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
   const {
     name,
     specialty,
+    priority,
+    sub_specialty,
+    assistant_name,
+    assistant_phone,
+    preferred_contact,
     phone,
     address,
     hospital1,
@@ -86,6 +107,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
     nextVisitDate,
     reminderNote,
     lastFeedback,
+    lat,
+    lng,
+    area,
   } = req.body;
 
   try {
@@ -103,6 +127,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
       data: {
         name: name !== undefined ? name : existingDoctor.name,
         specialty: specialty !== undefined ? specialty : existingDoctor.specialty,
+        priority: priority !== undefined ? priority : existingDoctor.priority,
+        subSpecialty: sub_specialty !== undefined ? sub_specialty : existingDoctor.subSpecialty,
+        assistantName: assistant_name !== undefined ? assistant_name : existingDoctor.assistantName,
+        assistantPhone: assistant_phone !== undefined ? assistant_phone : existingDoctor.assistantPhone,
+        preferredContact: preferred_contact !== undefined ? preferred_contact : existingDoctor.preferredContact,
         phone: phone !== undefined ? phone : existingDoctor.phone,
         address: address !== undefined ? address : existingDoctor.address,
         hospital1: hospital1 !== undefined ? hospital1 : existingDoctor.hospital1,
@@ -111,6 +140,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
         nextVisitDate: nextVisitDate ? new Date(nextVisitDate) : (nextVisitDate === null ? null : existingDoctor.nextVisitDate),
         reminderNote: reminderNote !== undefined ? reminderNote : existingDoctor.reminderNote,
         lastFeedback: lastFeedback !== undefined ? lastFeedback : existingDoctor.lastFeedback,
+        lat: lat !== undefined ? parseFloat(lat) : existingDoctor.lat,
+        lng: lng !== undefined ? parseFloat(lng) : existingDoctor.lng,
+        area: area !== undefined ? area : existingDoctor.area,
       },
     });
 

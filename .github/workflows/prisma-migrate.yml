@@ -1,0 +1,49 @@
+name: Run Prisma Migrations
+
+on:
+  push:
+    branches:
+      - main
+      - deploy/ai-features
+      - ci/prisma-migrate
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # If DATABASE_URL is not provided, skip migrations but still install/generate client.
+          if [ -z "$DATABASE_URL" ]; then
+            echo "WARNING: DATABASE_URL secret is not set. Skipping prisma migrate deploy. To run migrations, add DATABASE_URL in repo secrets." >&2
+            echo "Still running prisma generate to keep the repo healthy."
+            cd backend
+            npx prisma generate || true
+            exit 0
+          fi
+
+          if [ -z "$DIRECT_URL" ]; then
+            echo "DIRECT_URL is empty; setting it from DATABASE_URL" >&2
+            export DIRECT_URL="$DATABASE_URL"
+          fi
+
+          cd backend
+          echo "Running prisma migrate deploy..."
+          npx prisma migrate deploy
+          npx prisma generate

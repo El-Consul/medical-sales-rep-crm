@@ -27,9 +27,67 @@ const Visits = () => {
     location: '',
     notes: '',
     feedback: '',
+    products_presented: '',
+    samples_given: 0,
+    doctor_mood: 'neutral',
+    visit_result: 'interested',
     nextVisitDate: '',
     reminderMinutesBefore: 60,
   });
+
+  // Voice recording (Web Speech API)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingField, setRecordingField] = useState(null); // 'notes' or 'feedback'
+  const recognitionRef = React.useRef(null);
+
+  const initRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    const recog = new SpeechRecognition();
+    recog.lang = 'ar-EG';
+    recog.interimResults = false;
+    recog.maxAlternatives = 1;
+    return recog;
+  };
+
+  const startRecording = (field) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('ميزة التسجيل غير مدعومة في متصفحك');
+      return;
+    }
+
+    // If already recording, stop
+    if (isRecording) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      return;
+    }
+
+    const recog = initRecognition();
+    if (!recog) { alert('ميزة التسجيل غير متاحة'); return; }
+
+    recognitionRef.current = recog;
+    setRecordingField(field);
+    setIsRecording(true);
+
+    recog.onresult = (event) => {
+      const text = Array.from(event.results).map(r => r[0].transcript).join('');
+      setFormData(prev => ({ ...prev, [field]: (prev[field] ? prev[field] + ' ' : '') + text }));
+    };
+
+    recog.onerror = (e) => {
+      console.error('Speech error', e);
+      setIsRecording(false);
+      setRecordingField(null);
+    };
+
+    recog.onend = () => {
+      setIsRecording(false);
+      setRecordingField(null);
+    };
+
+    try { recog.start(); } catch (err) { console.error(err); }
+  };
 
   const showToast = (msg, type = 'success') => {
     setToastMsg({ text: msg, type });
@@ -314,9 +372,13 @@ const Visits = () => {
                         <h3 className="font-extrabold text-slate-900 text-sm truncate">
                           {visit.doctor?.name || 'طبيب محذوف'}
                         </h3>
-                        <span className="text-[10px] bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full font-extrabold flex-shrink-0">
-                          {visit.visitType}
-                        </span>
+                        <div className="flex gap-2 items-center">
+                          <span className="text-[10px] bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full font-extrabold flex-shrink-0">{visit.visitType}</span>
+                          {/* mood emoji */}
+                          <span className="text-lg">{visit.doctorMood === 'positive' ? '😊' : visit.doctorMood === 'negative' ? '😠' : '😐'}</span>
+                          {/* result badge */}
+                          <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-extrabold ${visit.visitResult === 'interested' ? 'bg-green-50 text-green-600' : visit.visitResult === 'needs_followup' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'}`}>{visit.visitResult}</span>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-400 truncate mt-1">
                         📍 {visit.location || 'غير محدد'}
@@ -347,6 +409,15 @@ const Visits = () => {
                           <span className="font-extrabold text-slate-900 block mb-1">📝 ملاحظات الزيارة:</span>
                           <p className="leading-relaxed">{visit.notes}</p>
                         </div>
+                      )}
+                      {visit.productsPresented && (
+                        <div className="bg-white rounded-2xl p-3 border">
+                          <span className="font-extrabold block mb-1">📦 المنتجات المعروضة:</span>
+                          <p className="leading-relaxed text-sm">{visit.productsPresented}</p>
+                        </div>
+                      )}
+                      {visit.samplesGiven !== null && visit.samplesGiven !== undefined && (
+                        <div className="text-sm text-slate-600">🎁 عدد العينات المسلمة: <span className="font-extrabold">{visit.samplesGiven}</span></div>
                       )}
                       {visit.feedback && (
                         <div className="bg-green-50/50 rounded-2xl p-3 border-r-4 border-r-green-500">
@@ -416,32 +487,61 @@ const Visits = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">تاريخ ووقت الزيارة *</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-600 transition-all text-left"
-                    value={formData.visitDate}
-                    onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">تاريخ ووقت الزيارة *</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-600 transition-all text-left"
+                      value={formData.visitDate}
+                      onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">نوع الزيارة</label>
+                    <select
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-600 transition-all text-right"
+                      value={formData.visitType}
+                      onChange={(e) => setFormData({ ...formData, visitType: e.target.value })}
+                    >
+                      <option value="زيارة عادية">زيارة عادية</option>
+                      <option value="تقديم منتج">تقديم منتج</option>
+                      <option value="فولو أب">فولو أب</option>
+                      <option value="تسليم عينات">تسليم عينات</option>
+                      <option value="أخرى">أخرى</option>
+                    </select>
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">نوع الزيارة</label>
-                  <select
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-600 transition-all text-right"
-                    value={formData.visitType}
-                    onChange={(e) => setFormData({ ...formData, visitType: e.target.value })}
-                  >
-                    <option value="زيارة عادية">زيارة عادية</option>
-                    <option value="تقديم منتج">تقديم منتج</option>
-                    <option value="فولو أب">فولو أب</option>
-                    <option value="تسليم عينات">تسليم عينات</option>
-                    <option value="أخرى">أخرى</option>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">المنتجات المعروضة</label>
+                  <input value={formData.products_presented} onChange={e => setFormData({ ...formData, products_presented: e.target.value })} placeholder="قائمة المنتجات مفصولة بفواصل" className="w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm text-right" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">العيّنات المسلمة</label>
+                    <input type="number" value={formData.samples_given} onChange={e => setFormData({ ...formData, samples_given: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm text-right" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">مزاج الدكتور</label>
+                    <select value={formData.doctor_mood} onChange={e => setFormData({ ...formData, doctor_mood: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm text-right">
+                      <option value="positive">😊 إيجابي</option>
+                      <option value="neutral">😐 محايد</option>
+                      <option value="negative">😠 سلبي</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">نتيجة الزيارة</label>
+                  <select value={formData.visit_result} onChange={e => setFormData({ ...formData, visit_result: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm text-right">
+                    <option value="interested">مهتم</option>
+                    <option value="not_interested">غير مهتم</option>
+                    <option value="needs_followup">يحتاج متابعة</option>
                   </select>
                 </div>
-              </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1.5">المستشفى / العيادة (المكان)</label>
@@ -454,26 +554,45 @@ const Visits = () => {
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold text-slate-500 mb-1.5">ملاحظات الزيارة</label>
                 <textarea
                   placeholder="اكتب ما تم مناقشته خلال الزيارة..."
                   rows={2.5}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-right"
+                  className="w-full px-4 py-3 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-right"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
+                {/* Mic button */}
+                <button type="button" title="اضغط للتسجيل" onClick={() => startRecording('notes')} className={`absolute left-3 top-9 p-2 rounded-full transition-all ${isRecording && recordingField === 'notes' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v11"/><path d="M19 11a7 7 0 0 1-14 0"/><path d="M5 21h14"/></svg>
+                </button>
+                {isRecording && recordingField === 'notes' && (
+                  <div className="absolute left-14 top-10 flex items-center gap-2 text-xs text-red-600">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                    <span>جاري التسجيل...</span>
+                  </div>
+                )}
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold text-slate-500 mb-1.5">فيدباك / رد فعل الدكتور</label>
                 <textarea
                   placeholder="فيدباك الدكتور ورأيه في المنتج..."
                   rows={2.5}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-right"
+                  className="w-full px-4 py-3 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-all text-right"
                   value={formData.feedback}
                   onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
                 />
+                <button type="button" title="اضغط للتسجيل" onClick={() => startRecording('feedback')} className={`absolute left-3 top-9 p-2 rounded-full transition-all ${isRecording && recordingField === 'feedback' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v11"/><path d="M19 11a7 7 0 0 1-14 0"/><path d="M5 21h14"/></svg>
+                </button>
+                {isRecording && recordingField === 'feedback' && (
+                  <div className="absolute left-14 top-10 flex items-center gap-2 text-xs text-red-600">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                    <span>جاري التسجيل...</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-slate-100 pt-3">

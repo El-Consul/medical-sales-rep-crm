@@ -5,6 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const taskRoutes = require('./routes/taskRoutes');
+const targetRoutes = require('./routes/targetRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,6 +36,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/targets', targetRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -54,4 +58,3 @@ if (require.main === module || process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = app;
-
