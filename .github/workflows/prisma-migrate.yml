@@ -29,6 +29,16 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          # sanity checks to provide clear failure message if secrets are missing
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL secret is not set or empty. Add it in GitHub repo Settings -> Secrets -> Actions." >&2
+            exit 1
+          fi
+          if [ -z "$DIRECT_URL" ]; then
+            echo "ERROR: DIRECT_URL is empty; setting it from DATABASE_URL" >&2
+            export DIRECT_URL="$DATABASE_URL"
+          fi
           cd backend
+          echo "Running prisma migrate deploy..."
           npx prisma migrate deploy
           npx prisma generate
