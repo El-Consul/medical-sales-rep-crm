@@ -97,6 +97,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Change password handler
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      await axios.post('/auth/change-password', { currentPassword, newPassword });
+      setUser(prev => prev ? { ...prev, mustChangePassword: false } : null);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'حدث خطأ أثناء تغيير كلمة المرور',
+      };
+    }
+  };
 
   const value = {
     user,
@@ -106,6 +119,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateSettings,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -36,10 +36,19 @@ const ChatWidget = () => {
         return;
       }
 
+      const chatHistory = messages
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({
+          role: m.role,
+          content: m.text
+        }));
+
       const payload = {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1024,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
+          ...chatHistory,
           { role: 'user', content: text }
         ]
       };
@@ -47,9 +56,10 @@ const ChatWidget = () => {
       const res = await fetch(CLAUDE_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'dangerouslyAllowBrowser': 'true'
         },
         body: JSON.stringify(payload),
       });
@@ -61,7 +71,7 @@ const ChatWidget = () => {
 
       const data = await res.json();
       // Claude response shape: choose assistant reply
-      const aiText = data?.completion || data?.choices?.[0]?.message?.content || JSON.stringify(data);
+      const aiText = data?.content?.[0]?.text || data?.completion || data?.choices?.[0]?.message?.content || JSON.stringify(data);
 
       setMessages(prev => [...prev, { role: 'assistant', text: aiText }]);
     } catch (err) {

@@ -56,4 +56,18 @@ router.put('/:id/done', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete task
+router.delete('/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const existing = await prisma.task.findFirst({ where: { id, userId: req.user.id } });
+    if (!existing) return res.status(404).json({ error: 'Task not found' });
+    await prisma.task.delete({ where: { id } });
+    res.json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
+
 module.exports = router;

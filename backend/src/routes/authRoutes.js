@@ -33,6 +33,7 @@ router.post('/register', async (req, res) => {
         password: hashedPassword,
         name,
         reminderEmail: email, // Default reminder email to their account email
+        mustChangePassword: true,
       },
     });
 
@@ -88,6 +89,7 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         reminderEmail: user.reminderEmail,
+        mustChangePassword: user.mustChangePassword,
       },
     });
   } catch (error) {
@@ -110,10 +112,45 @@ router.get('/me', authMiddleware, async (req, res) => {
       name: user.name,
       email: user.email,
       reminderEmail: user.reminderEmail,
+      mustChangePassword: user.mustChangePassword,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'حدث خطأ أثناء جلب بيانات الملف الشخصي' });
+  }
+});
+
+// Change Password
+router.post('/change-password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'من فضلك أدخل كلمة المرور الحالية والجديدة' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'المستخدم غير موجود' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: false,
+      },
+    });
+
+    res.json({ message: 'تم تغيير كلمة المرور بنجاح' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'حدث خطأ أثناء تغيير كلمة المرور' });
   }
 });
 

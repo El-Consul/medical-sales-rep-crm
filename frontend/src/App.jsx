@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import BottomNav from './components/BottomNav';
 import ChatWidget from './components/ChatWidget';
+import ChangePasswordForceScreen from './components/ChangePasswordForceScreen';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Doctors from './pages/Doctors';
@@ -15,6 +16,10 @@ import Settings from './pages/Settings';
 
 // Layout for Protected Pages (renders BottomNav at the bottom)
 const ProtectedLayout = () => {
+  const { user } = useAuth();
+  if (user?.mustChangePassword) {
+    return <ChangePasswordForceScreen />;
+  }
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="pb-16">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Loader2, Plus, CheckSquare } from 'lucide-react';
+import { Loader2, Plus, CheckSquare, Trash2 } from 'lucide-react';
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -38,6 +38,14 @@ const Tasks = () => {
     } catch (e) { console.error(e); }
   };
 
+  const deleteTask = async (id) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
+    try {
+      await axios.delete(`/tasks/${id}`);
+      setTasks(tasks.filter(t => t.id !== id));
+    } catch (e) { console.error(e); }
+  };
+
   return (
     <div className="min-h-screen pb-24 text-slate-800 bg-slate-50">
       <div className="max-w-md mx-auto px-4 pt-4">
@@ -63,11 +71,14 @@ const Tasks = () => {
           ) : (
             tasks.map(t => (
               <div key={t.id} className={`bg-white p-4 rounded-2xl border flex items-center justify-between ${!t.isDone && t.dueDate && new Date(t.dueDate) < new Date() ? 'border-red-400' : 'border-slate-100'}`}>
-                <div className="text-right">
+                <div className="text-right flex-1">
                   <div className="font-bold">{t.title}</div>
                   <div className="text-xs text-slate-500">{t.doctor?.name} • {t.dueDate ? new Date(t.dueDate).toLocaleDateString('ar-EG') : 'بدون موعد'}</div>
                 </div>
-                <button onClick={() => toggleDone(t.id)} className={`p-2 rounded-lg ${t.isDone ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-600'}`}><CheckSquare className="w-5 h-5"/></button>
+                <div className="flex gap-2">
+                  <button onClick={() => toggleDone(t.id)} className={`p-2 rounded-lg ${t.isDone ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-600'}`}><CheckSquare className="w-5 h-5"/></button>
+                  <button onClick={() => deleteTask(t.id)} className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all"><Trash2 className="w-5 h-5"/></button>
+                </div>
               </div>
             ))
           )}

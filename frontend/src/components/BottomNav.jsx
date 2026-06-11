@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Calendar, Settings } from 'lucide-react';
+import { Home, Users, Calendar, Settings, Clock, Activity, MapPin } from 'lucide-react';
 
 const BottomNav = () => {
   const navItems = [
